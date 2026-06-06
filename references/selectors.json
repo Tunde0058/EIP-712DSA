@@ -1,0 +1,42 @@
+{
+  "_comment": "Top function selectors used by the EIP-712 auditor. The auditor uses these to identify which functions the contract exposes and adjust the audit scope.",
+  "selectors": {
+    "0x3644e515": "DOMAIN_SEPARATOR()",
+    "0xd505accf": "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)",
+    "0x7ecebe00": "nonces(address)",
+    "0x8fcbaf23": "name()",
+    "0x06fdde03": "name() [ERC-20 canonical]",
+    "0x54fd4d50": "version()",
+    "0x95d89b41": "symbol()",
+    "0x18160ddd": "totalSupply()",
+    "0x70a08231": "balanceOf(address)",
+    "0xa9059cbb": "transfer(address,uint256)",
+    "0x23b872dd": "transferFrom(address,address,uint256)",
+    "0x095ea7b3": "approve(address,uint256)",
+    "0xdd62ed3e": "allowance(address,address)",
+    "0x2e17de78": "unstake(uint256)",
+    "0xb69ef8a8": "getReward()",
+    "0x4e71d92d": "claim()",
+    "0x4e71e9c2": "claim(uint256)",
+    "0x2e64cec1": "claim(address)",
+    "0x4f2be91f": "swap(address,bool,int256,uint160,bytes)",
+    "0x022c0d9f": "swap(uint256,uint256,address,bytes)",
+    "0x791ac947": "swapExactTokensForTokens",
+    "0xfb46172a": "removeLiquidityETHWithPermit",
+    "0x2195995c": "addLiquidityWithPermit",
+    "0xc6610657": "removeLiquidityWithPermit",
+    "0xded9382a": "removeLiquidityETHWithPermit",
+    "0x8fcbaf23": "removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)"
+  },
+  "knownNames": {
+    "_comment": "Common token name strings. keccak256 of each is checked against the bytecode for the 'name field present' check.",
+    "0x06c2d6ee91796f901b7a3a6c37e62c8b1a0b8e8e5b0a0d6d4c1a5b6e8c4f6a2b": "USD Coin"
+  },
+  "knownVersions": {
+    "_comment": "Common version strings. keccak256 of each is checked for the 'version field present' check.",
+    "1": "1",
+    "2": "2",
+    "v1": "v1",
+    "v2": "v2"
+  }
+}
