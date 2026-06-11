@@ -5,7 +5,10 @@ version: 1.0.0
 author: Tunde0058
 tags: [pharos, security, audit, eip-712, domain-separator, typed-data, permit, signature, evm, bytecode, mainnet, testnet]
 agents: [claude, codex, openclaw, gemini]
+requires: read
+bins: [python3]
 ---
+
 
 # eip712dsa — EIP-712 Domain Separator Auditor
 
@@ -177,3 +180,67 @@ Be honest about scope:
 - `references/eip712-spec.md` — the EIP-712 spec, distilled into a one-pager for the matcher
 - `references/selectors.json` — known function selectors (`permit`, `nonces`, `DOMAIN_SEPARATOR`, etc.)
 - `examples/sample-report.md` — what a real audit looks like
+
+## Prerequisites
+
+```bash
+python3 --version   # 3.10+
+```
+
+The skill uses only the Python standard library (`urllib.request`,
+`json`, `argparse`). No third-party packages, no Foundry, no
+`pip install` step.
+
+The skill is **read-only** — no private key is required or accepted.
+
+## Network Configuration
+
+Network RPC URLs and chain IDs are sourced from
+`assets/networks.json` (canonical Pharos Skill Engine schema). To
+add a new network, append a new object to the `networks` array and
+update `defaultNetwork` if needed.
+
+## Capability Index
+
+| User Need | Capability | Detailed Instructions |
+|---|---|---|
+| Default entry point | CLI with a `--wallet` / `--safe` / `--governor` flag | See the `Usage` section in the README; the CLI takes a target identifier and prints a Markdown or JSON report |
+| JSON for an agent | `--format json` | Output is a structured payload that an agent can import directly |
+| Markdown report | pipe to `report.py` | `python3 src/... --format json \| python3 src/report.py --format markdown --out X.md` |
+| Bounded scan | `--max-blocks` / `--lookback` / `--block-count` | Default scans are bounded to stay within the public Pharos RPC's request rate |
+| Network switch | `--chain mainnet\|testnet` | Default is Atlantic testnet; pass `--chain mainnet` to switch |
+
+## General Error Handling
+
+| Error Scenario | CLI Error Signature | Handling |
+|---|---|---|
+| Target not on the specified chain | `null` receipt / no data returned | Exit with "not found on chain=X; try `--chain <other>`" |
+| RPC rate-limited (HTTP 429) | Backoff response from RPC | Built-in exponential backoff (0.4s, 0.8s, 1.6s, 3.2s) with 4 retry attempts |
+| Bad target format | Validator rejects the input | CLI prints a usage hint; no RPC call is made |
+| Missing required arg | `argparse` exits with usage | CLI prints required args; user re-invokes with the right flags |
+| No matches (clean target) | Empty result / `verdict: clean` | Normal case — emit the "no issues" report, no error |
+
+## Security Reminders
+
+- **Private Key Protection** — the skill is read-only and never
+  accepts a private key. Do not paste keys into chat.
+- **Network Confirmation** — before any future write-skill
+  integration, confirm the network with the user.
+- **No External API** — the skill does not call any third-party
+  service beyond the Pharos RPC and PharosScan (where applicable).
+  All data is fetched directly.
+
+## Write Operation Pre-checks
+
+This skill is **read-only** and never submits a transaction, so the
+full 4-step write pre-check is not applicable. If a future version
+adds a write path, the pre-checks must include:
+
+1. **Private Key Check** — `--private-key` / `$PRIVATE_KEY` must be
+   set; warn if the key has zero balance.
+2. **Derive Public Address** — `cast wallet address`; confirm the
+   key is for the intended network.
+3. **Network Confirmation** — prompt the user with "You are about
+   to write to Pacific mainnet. Continue? (y/N)".
+4. **Automatic Balance Check** — `cast balance`; if below the
+   operation cost + gas, abort with a clear error.
