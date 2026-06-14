@@ -151,11 +151,38 @@ esac
 # ---- Fetch bytecode (cast required from here) ----
 ensure_cast
 
-BYTECODE_HEX=$(timeout 30 cast rpc --rpc-url "$RPC_URL" 'eth_getCode' "[\"$CONTRACT\",\"latest\"]" 2>/dev/null \
-  | jq -r '.result' 2>/dev/null || echo "")
+# Use `cast code` (the dedicated subcommand for eth_getCode) — simpler
+# and more reliable than `cast rpc eth_getCode [...]` which has fragile
+# arg-quoting. `cast code` returns the bytecode hex on stdout, or
+# exits non-zero with a clear error on stderr.
+RAW_OUTPUT=$(timeout 30 cast code --rpc-url "$RPC_URL" "$CONTRACT" 2>&1)
+CAST_EXIT=$?
 
-if [ -z "$BYTECODE_HEX" ] || [ "$BYTECODE_HEX" = "null" ] || [ "$BYTECODE_HEX" = "0x" ]; then
-  echo "Error: contract has no deployed code (or address is an EOA, or RPC error)" >&2
+BYTECODE_HEX="$RAW_OUTPUT"
+
+if [ "$CAST_EXIT" -ne 0 ]; then
+  echo "Error: cast code failed (exit $CAST_EXIT) for $CONTRACT on $NETWORK" >&2
+  echo "  RPC URL: $RPC_URL" >&2
+  echo "  cast output: $RAW_OUTPUT" >&2
+  echo "" >&2
+  echo "  Possible causes:" >&2
+  echo "    - the RPC endpoint is unreachable (check your network)" >&2
+  echo "    - the Pharos public RPC is rate-limiting your IP" >&2
+  echo "    - the contract address is wrong or on a different chain" >&2
+  echo "    - cast is not the latest version (run 'foundryup')" >&2
+  exit 1
+fi
+
+# Strip 0x prefix; handle empty/0x results
+BYTECODE_HEX="${BYTECODE_HEX#0x}"
+
+if [ -z "$BYTECODE_HEX" ] || [ "$BYTECODE_HEX" = "0x" ] || [ "$BYTECODE_HEX" = "0X" ]; then
+  echo "Error: contract has no deployed code at $CONTRACT on $NETWORK" >&2
+  echo "  Possible causes:" >&2
+  echo "    - the address is an EOA (not a contract)" >&2
+  echo "    - the contract hasn't been deployed yet" >&2
+  echo "    - the contract was deployed on a different chain (try --network testnet)" >&2
+  echo "    - the public RPC is rate-limited; try again or use a private RPC" >&2
   exit 1
 fi
 
