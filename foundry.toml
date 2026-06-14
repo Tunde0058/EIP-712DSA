@@ -1,0 +1,9 @@
+# Minimal foundry.toml for EIP-712DSA
+# This is a bytecode auditor, not a Solidity project, but cast requires
+# a config to find the project root.
+[profile.default]
+src = "scripts"
+out = "out"
+solc = "0.8.24"
+optimizer = true
+optimizer_runs = 200
